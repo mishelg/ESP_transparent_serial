@@ -1,5 +1,5 @@
-#define SSID "Bathouse"
-#define SSID_PASSWORD "U2Brutus"
+#define SSID "xxxxxx"
+#define SSID_PASSWORD "xxxxxx"
 #define IP1 192
 #define IP2 168
 #define IP3 0
