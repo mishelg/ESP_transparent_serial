@@ -9,24 +9,13 @@
 #include "c_types.h"
 #include "espconn.h"
 #include "mem.h"
-#include "user_esp_platform.h"
 #define UART0   0
 #define user_procTaskPrio        0
 #define user_procTaskQueueLen    1
-
-typedef struct
-{
-  char* ssid;
-  unsigned short len;
-  uint32_t saved;
-}saved_SSID;
-
 extern UartDevice UartDev;
 struct espconn conn;
 os_event_t    user_procTaskQueue[user_procTaskQueueLen];
 static void loop(os_event_t *events);
-//saved_SSID new_SSID;
-esp_platform_saved_param new_SSID;
 
 //Main code function
 static void ICACHE_FLASH_ATTR
@@ -47,42 +36,13 @@ LOCAL os_timer_t network_timer;
 LOCAL os_timer_t read_timer;
 
 static void ICACHE_FLASH_ATTR networkSentCb(void *arg) {
-  //uart0_tx_buffer("sent",4);
 }
-static void ICACHE_FLASH_ATTR store_ssid(char *data, unsigned short length) {
-//new_SSID.ssid = data;
-//new_SSID.len = length;
-//new_SSID.saved = 1;
-new_SSID.devkey = data;
-new_SSID.activeflag = length;
-user_esp_platform_save_param(& new_SSID);
-//spi_flash_write((ESP_PARAM_START_SEC+1)  * SPI_FLASH_SEC_SIZE, (uint32 *)& new_SSID, sizeof(saved_SSID));
-//spi_flash_read((ESP_PARAM_START_SEC+1)  * SPI_FLASH_SEC_SIZE, (uint32 *)& new_SSID, sizeof(saved_SSID));
-//uart0_tx_buffer(new_SSID.ssid,new_SSID.len);
-}
-
-static void ICACHE_FLASH_ATTR retrieve_ssid() {
-user_esp_platform_load_param(& new_SSID);
-//user_esp_platform_load_param((uint32 *)& new_SSID, sizeof(saved_SSID));
-//spi_flash_read((ESP_PARAM_START_SEC+1)  * SPI_FLASH_SEC_SIZE, (uint32 *)& new_SSID, sizeof(saved_SSID));
-uart0_tx_buffer(new_SSID.devkey, new_SSID.activeflag);
-uart0_tx_buffer('\n',1);
-}
-
 static void ICACHE_FLASH_ATTR networkRecvCb(void *arg, char *data, unsigned short len) {
   struct espconn *conn=(struct espconn *)arg;
   if(data[0]=='R' && data[1]=='S'&& data[2]=='T' && data[3]=='!' ){
 	gpio_output_set(0, BIT2, BIT2, 0);
 	os_delay_us(10);
 	gpio_output_set(BIT2, 0, BIT2, 0);
-  }
-  if(data[0] == 'S' && data[1] == 'S' && data[2] == '_' && data[3] == 'S' && data[4] == 'E' && data[5] == 'T') {
-	store_ssid(data,len);
-//uart0_tx_buffer(new_SSID.ssid,new_SSID.len);
-
-  }
-  if(data[0] == 'S' && data[1] == 'S' && data[2] == '_' && data[3] == 'G' && data[4] == 'E' && data[5] == 'T') {
-	retrieve_ssid();
   }
   uart0_tx_buffer(data,len);
 }
@@ -107,13 +67,13 @@ void ICACHE_FLASH_ATTR network_start() {
   static ip_addr_t *ip_pointer = &ip;
   static esp_tcp tcp;
  
-  IP4_ADDR(&ip, (uint8) 10, (uint8) 0, (uint8) 2, (uint8) 87);
+  IP4_ADDR(&ip, (uint8) IP1, (uint8) IP2, (uint8) IP3, (uint8) IP4);
   
   conn.type=ESPCONN_TCP;
   conn.state=ESPCONN_NONE;
   conn.proto.tcp=&tcp;
   conn.proto.tcp->local_port=espconn_port();
-  conn.proto.tcp->remote_port=3333;
+  conn.proto.tcp->remote_port=PORT_NUMBER;
   os_memcpy(conn_pointer->proto.tcp->remote_ip, &ip_pointer->addr, 4);
   espconn_regist_connectcb(&conn, networkConnectedCb);
   espconn_regist_disconcb(&conn, networkDisconCb);
@@ -121,7 +81,6 @@ void ICACHE_FLASH_ATTR network_start() {
   espconn_regist_recvcb(&conn, networkRecvCb);
   espconn_connect(&conn);
 }
-//10.0.2.38
 void ICACHE_FLASH_ATTR read_buffer(void) {
   struct espconn *conn_pointer = (struct espconn*) &conn;
   uint8* temp;
