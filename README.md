@@ -3,7 +3,7 @@
 
 ##Synopsis
 
-The code and the firmware provided here is meant to enable the use of the ESP8266 hardware as a transparent serial communicator.
+The code and the firmware provided here is meant to enable the use of the ESP8266 hardware as a transparent serial communicator. Please refer https://hackaday.io/project/9931-wireless-arduino-uploading-using-esp8266 for better context.
 
 ##Installation
 
